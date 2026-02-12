@@ -3,135 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SRM Vision | Gestão de Recebimento NPC</title>
+    <title>NPC SRM 2.0 - Gestão de Fornecedores</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <div class="logo">SRM<span>Vision</span></div>
+<nav class="navbar">
+    <div class="nav-brand">NPC SRM 2.0</div>
+    <div class="nav-links">
+        <button onclick="irParaTela('colaborador')" id="btn-colab" class="btn-nav active">Avaliar</button>
+        <button onclick="abrirAutenticacao('compras')" id="btn-compras" class="btn-nav">Compras</button>
+        <button onclick="abrirAutenticacao('dashboard')" id="btn-dash" class="btn-nav">Dashboard</button>
+    </div>
+</nav>
+
+<div id="modal-senha" class="modal hidden">
+    <div class="modal-content">
+        <h3>Acesso Restrito</h3>
+        <input type="password" id="input-senha" placeholder="Senha (123)">
+        <div class="modal-btns">
+            <button onclick="confirmarAcesso()" class="btn-confirm">Entrar</button>
+            <button onclick="fecharModal()" class="btn-cancel">Sair</button>
         </div>
-        <nav class="nav-menu">
-            <button onclick="showScreen('admin')" class="nav-link active" id="btn-admin">
-                <i>🛒</i> Comprador
-            </button>
-            <button onclick="showScreen('eval')" class="nav-link" id="btn-eval">
-                <i>📦</i> Recebimento
-            </button>
-            <button onclick="showScreen('history')" class="nav-link" id="btn-history">
-                <i>📊</i> Dashboard
-            </button>
-        </nav>
-        <div class="sidebar-footer">NPC Network v4.0</div>
-    </aside>
+    </div>
+</div>
 
-    <main class="main-container">
-        <section id="screen-admin" class="screen">
-            <div class="page-header">
-                <h1>Painel do Comprador</h1>
-                <p>Registre novas ordens de compra para as unidades.</p>
-            </div>
-            
-            <div class="glass-card">
-                <div class="form-grid">
-                    <div class="input-group">
-                        <label>Fornecedor</label>
-                        <input type="text" id="adminSupplier" placeholder="Razão Social ou Nome Fantasia">
-                    </div>
-                    <div class="input-group">
-                        <label>Unidade de Destino</label>
-                        <select id="adminUnit">
-                            <option value="NPC MATRIZ">📍 NPC MATRIZ</option>
-                            <option value="NPC LIFE">📍 NPC LIFE</option>
-                            <option value="NPC SUL">📍 NPC SUL</option>
-                        </select>
-                    </div>
-                </div>
-                <button onclick="createOrder()" class="btn-primary">Gerar Ordem de Recebimento</button>
-                
-                <div id="linkOutput" class="hidden success-toast">
-                    <p>Ordem criada com sucesso! ID: <strong id="generatedID"></strong></p>
-                </div>
-            </div>
-        </section>
+<div id="modal-detalhes" class="modal hidden">
+    <div class="modal-content detalhe-expandido">
+        <h3>Detalhamento da Entrega</h3>
+        <div id="conteudo-detalhe"></div>
+        <button onclick="fecharModalDetalhe()" class="btn-action primary">Fechar</button>
+    </div>
+</div>
 
-        <section id="screen-eval" class="screen hidden">
-            <div class="page-header">
-                <h1>Recebimento de Materiais</h1>
-                <p>Selecione a carga e valide os dados da Nota Fiscal.</p>
+<main class="container">
+    <section id="view-colaborador" class="view">
+        <div class="card">
+            <h3>Recebimento de Mercadoria</h3>
+            <label>Selecione o Item Recebido:</label>
+            <select id="select-item-pendente" onchange="carregarDadosItem()">
+                <option value="">-- Aguardando Entrega --</option>
+            </select>
+
+            <div class="info-badge">
+                <p>Fornecedor: <b id="display-forn">---</b></p>
+                <p>Produto: <b id="display-item">---</b> | NF: <b id="display-nf">---</b></p>
             </div>
 
-            <div class="glass-card">
-                <div class="form-grid">
-                    <div class="input-group">
-                        <label>Sua Unidade</label>
-                        <select id="filterUnit" onchange="updatePendingSelect()">
-                            <option value="NPC MATRIZ">NPC MATRIZ</option>
-                            <option value="NPC LIFE">NPC LIFE</option>
-                            <option value="NPC SUL">NPC SUL</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label>Carga pendente</label>
-                        <select id="pendingOrders" onchange="loadOrderDetails()"></select>
-                    </div>
+            <div class="legenda-notas">
+                Legenda: 1-Ruim | 2-Regular | 3-Bom | 4-Muito Bom | 5-Excelente
+            </div>
+
+            <form id="form-avaliacao">
+                <div class="rating-grid">
+                    <div class="rate-item"><span>Qualidade</span><input type="number" id="nota-qualidade" min="1" max="5" value="5"></div>
+                    <div class="rate-item"><span>Entrega</span><input type="number" id="nota-entrega" min="1" max="5" value="5"></div>
+                    <div class="rate-item"><span>Estado</span><input type="number" id="nota-estado" min="1" max="5" value="5"></div>
                 </div>
 
-                <div id="evalFields" class="hidden eval-container">
-                    <hr class="divider">
-                    <div class="form-grid">
-                        <div class="input-group">
-                            <label>Número da NF</label>
-                            <input type="number" id="invoiceNumber" placeholder="000.000.000">
-                        </div>
-                        <div class="input-group">
-                            <label>Nota de Performance</label>
-                            <div class="rating-selector">
-                                <input type="radio" name="score" value="1" id="n1"><label for="n1">1</label>
-                                <input type="radio" name="score" value="2" id="n2"><label for="n2">2</label>
-                                <input type="radio" name="score" value="3" id="n3"><label for="n3">3</label>
-                                <input type="radio" name="score" value="4" id="n4"><label for="n4">4</label>
-                                <input type="radio" name="score" value="5" id="n5"><label for="n5">5</label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="input-group" style="margin-top: 20px;">
-                        <label>Relato do Recebimento (Ocorrências)</label>
-                        <textarea id="obsOpen" rows="4" placeholder="Descreva como foi o recebimento..."></textarea>
-                    </div>
-                    <button onclick="submitEvaluation()" class="btn-success">Finalizar e Sincronizar</button>
-                </div>
+                <label>Foto da Avaria/NF (Opcional):</label>
+                <input type="file" id="foto-avaria" accept="image/*" class="input-file">
+
+                <textarea id="comentario" rows="3" placeholder="Houve divergência? A embalagem está íntegra? Relate aqui..."></textarea>
+                <button type="button" class="btn-action success" onclick="enviarAvaliacao()">Finalizar Recebimento</button>
+            </form>
+        </div>
+    </section>
+
+    <section id="view-compras" class="view hidden">
+        <div class="card admin">
+            <h3>Cadastrar Fornecedor</h3>
+            <div class="flex-row">
+                <input type="text" id="cad-forn-nome" placeholder="Nome da Empresa">
+                <button onclick="cadastrarFornecedor()" class="btn-small">+</button>
             </div>
-        </section>
-
-        <section id="screen-history" class="screen hidden">
-            <div class="page-header">
-                <h1>Inteligência de Dados</h1>
-                <p>Análise de performance por unidade e fornecedor.</p>
+            <hr>
+            <h3>Gerar Novo Protocolo</h3>
+            <div class="form-vertical">
+                <label>Fornecedor:</label>
+                <select id="nf-fornecedor-select"></select>
+                <label>Número da NF:</label>
+                <input type="text" id="nf-numero" placeholder="Ex: 102030">
+                <label>Produto/Serviço:</label>
+                <input type="text" id="nf-item">
+                <button class="btn-action primary" onclick="gerarProtocolo()">Liberar para Estoque</button>
             </div>
+        </div>
+    </section>
 
-            <div id="quickAlerts"></div>
+    <section id="view-dashboard" class="view hidden">
+        <div class="kpi-container">
+            <div class="kpi-card">
+                <small>Média Geral</small>
+                <h2 id="kpi-media">0.0</h2>
+            </div>
+            <div class="kpi-card">
+                <small>Total Entregas</small>
+                <h2 id="kpi-total">0</h2>
+            </div>
+        </div>
 
-            <div class="table-card">
-                <table id="mainTable">
+        <div class="card">
+            <h3>Ranking de Performance</h3>
+            <canvas id="meuGrafico" height="200"></canvas>
+        </div>
+
+        <div class="card">
+            <h3>Log de Auditoria</h3>
+            <div class="table-responsive">
+                <table>
                     <thead>
                         <tr>
-                            <th>Unidade</th>
-                            <th>Fornecedor</th>
-                            <th>NF</th>
-                            <th>Score</th>
-                            <th>Status</th>
-                            <th>Ações</th>
+                            <th>Fornecedor/NF</th>
+                            <th>Nota</th>
+                            <th>Ação</th>
                         </tr>
                     </thead>
-                    <tbody id="historyBody"></tbody>
+                    <tbody id="ranking-body"></tbody>
                 </table>
             </div>
-        </section>
-    </main>
+        </div>
+    </section>
+</main>
 
-    <script src="script.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
