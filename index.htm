@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SRM Vision | Gestão de Recebimento NPC</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">SRM<span>Vision</span></div>
+        </div>
+        <nav class="nav-menu">
+            <button onclick="showScreen('admin')" class="nav-link active" id="btn-admin">
+                <i>🛒</i> Comprador
+            </button>
+            <button onclick="showScreen('eval')" class="nav-link" id="btn-eval">
+                <i>📦</i> Recebimento
+            </button>
+            <button onclick="showScreen('history')" class="nav-link" id="btn-history">
+                <i>📊</i> Dashboard
+            </button>
+        </nav>
+        <div class="sidebar-footer">NPC Network v4.0</div>
+    </aside>
+
+    <main class="main-container">
+        <section id="screen-admin" class="screen">
+            <div class="page-header">
+                <h1>Painel do Comprador</h1>
+                <p>Registre novas ordens de compra para as unidades.</p>
+            </div>
+            
+            <div class="glass-card">
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label>Fornecedor</label>
+                        <input type="text" id="adminSupplier" placeholder="Razão Social ou Nome Fantasia">
+                    </div>
+                    <div class="input-group">
+                        <label>Unidade de Destino</label>
+                        <select id="adminUnit">
+                            <option value="NPC MATRIZ">📍 NPC MATRIZ</option>
+                            <option value="NPC LIFE">📍 NPC LIFE</option>
+                            <option value="NPC SUL">📍 NPC SUL</option>
+                        </select>
+                    </div>
+                </div>
+                <button onclick="createOrder()" class="btn-primary">Gerar Ordem de Recebimento</button>
+                
+                <div id="linkOutput" class="hidden success-toast">
+                    <p>Ordem criada com sucesso! ID: <strong id="generatedID"></strong></p>
+                </div>
+            </div>
+        </section>
+
+        <section id="screen-eval" class="screen hidden">
+            <div class="page-header">
+                <h1>Recebimento de Materiais</h1>
+                <p>Selecione a carga e valide os dados da Nota Fiscal.</p>
+            </div>
+
+            <div class="glass-card">
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label>Sua Unidade</label>
+                        <select id="filterUnit" onchange="updatePendingSelect()">
+                            <option value="NPC MATRIZ">NPC MATRIZ</option>
+                            <option value="NPC LIFE">NPC LIFE</option>
+                            <option value="NPC SUL">NPC SUL</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Carga pendente</label>
+                        <select id="pendingOrders" onchange="loadOrderDetails()"></select>
+                    </div>
+                </div>
+
+                <div id="evalFields" class="hidden eval-container">
+                    <hr class="divider">
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label>Número da NF</label>
+                            <input type="number" id="invoiceNumber" placeholder="000.000.000">
+                        </div>
+                        <div class="input-group">
+                            <label>Nota de Performance</label>
+                            <div class="rating-selector">
+                                <input type="radio" name="score" value="1" id="n1"><label for="n1">1</label>
+                                <input type="radio" name="score" value="2" id="n2"><label for="n2">2</label>
+                                <input type="radio" name="score" value="3" id="n3"><label for="n3">3</label>
+                                <input type="radio" name="score" value="4" id="n4"><label for="n4">4</label>
+                                <input type="radio" name="score" value="5" id="n5"><label for="n5">5</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="input-group" style="margin-top: 20px;">
+                        <label>Relato do Recebimento (Ocorrências)</label>
+                        <textarea id="obsOpen" rows="4" placeholder="Descreva como foi o recebimento..."></textarea>
+                    </div>
+                    <button onclick="submitEvaluation()" class="btn-success">Finalizar e Sincronizar</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="screen-history" class="screen hidden">
+            <div class="page-header">
+                <h1>Inteligência de Dados</h1>
+                <p>Análise de performance por unidade e fornecedor.</p>
+            </div>
+
+            <div id="quickAlerts"></div>
+
+            <div class="table-card">
+                <table id="mainTable">
+                    <thead>
+                        <tr>
+                            <th>Unidade</th>
+                            <th>Fornecedor</th>
+                            <th>NF</th>
+                            <th>Score</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyBody"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
