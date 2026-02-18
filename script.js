@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, push, set, onValue, remove, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, push, onValue, remove, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyDctLVPi9e5lgANwZPfAqnb4Nx7FBBkIf0",
@@ -17,9 +17,7 @@ const db = getDatabase(app);
 let targetView = "";
 let meuGrafico = null;
 let pendentesLocais = {};
-let feedbacksConcluidos = [];
-
-// --- NAVEGAÇÃO E ACESSO REMOTO ---
+let feedbacksCache = [];
 
 window.abrirAutenticacao = (view) => {
     targetView = view;
@@ -33,25 +31,13 @@ window.fecharModal = () => {
 
 window.confirmarAcesso = () => {
     const senhaDigitada = document.getElementById('input-senha').value;
-    
-    // Busca a senha no banco de dados em vez de ter no código
-    const senhaRef = ref(db, 'config/senha_master');
-    get(senhaRef).then((snapshot) => {
-        if (snapshot.exists()) {
-            const senhaReal = snapshot.val();
-            if (senhaDigitada === String(senhaReal)) {
-                window.fecharModal();
-                window.irParaTela(targetView);
-            } else {
-                alert("Acesso Negado! Senha incorreta.");
-            }
+    get(ref(db, 'config/senha_master')).then((snap) => {
+        if (senhaDigitada === String(snap.val())) {
+            window.fecharModal();
+            window.irParaTela(targetView);
         } else {
-            // Se você ainda não criou a senha no Firebase, ele avisa:
-            alert("Erro: Senha não configurada no Banco de Dados.");
+            alert("Senha Incorreta!");
         }
-    }).catch((error) => {
-        console.error(error);
-        alert("Erro ao conectar ao servidor.");
     });
 };
 
@@ -60,152 +46,139 @@ window.irParaTela = (id) => {
     document.getElementById('view-' + id).classList.remove('hidden');
     document.querySelectorAll('.btn-nav').forEach(b => b.classList.remove('active'));
     
-    if(id === 'colaborador') document.getElementById('btn-colab').classList.add('active');
-    if(id === 'compras') document.getElementById('btn-compras').classList.add('active');
-    if(id === 'dashboard') document.getElementById('btn-dash').classList.add('active');
+    const btnMap = { 'colaborador': 'btn-colab', 'compras': 'btn-compras', 'dashboard': 'btn-dash' };
+    document.getElementById(btnMap[id]).classList.add('active');
 };
 
-// --- COMPRAS ---
-
 window.cadastrarFornecedor = () => {
-    let nome = document.getElementById('cad-forn-nome').value.trim();
-    if(!nome) return;
-    push(ref(db, 'fornecedores'), { nome });
+    const nome = document.getElementById('cad-forn-nome').value.trim();
+    if(nome) push(ref(db, 'fornecedores'), { nome });
     document.getElementById('cad-forn-nome').value = "";
-    alert("Fornecedor cadastrado!");
 };
 
 window.gerarProtocolo = () => {
-    let nf = document.getElementById('nf-numero').value;
-    let prod = document.getElementById('nf-item').value;
-    let forn = document.getElementById('nf-fornecedor-select').value;
+    const nf = document.getElementById('nf-numero').value;
+    const prod = document.getElementById('nf-item').value;
+    const forn = document.getElementById('nf-fornecedor-select').value;
+    const unid = document.getElementById('nf-unidade').value;
+
     if(!nf || !prod) return alert("Preencha os campos!");
 
-    push(ref(db, 'pendentes'), { fornecedor: forn, nf, produto: prod });
+    push(ref(db, 'pendentes'), { fornecedor: forn, nf: nf, produto: prod, unidade: unid });
     document.getElementById('nf-numero').value = "";
     document.getElementById('nf-item').value = "";
-    alert("Protocolo Enviado!");
+    alert("Liberado com sucesso!");
 };
 
-// --- SINCRONIZAÇÃO FIREBASE ---
-
-onValue(ref(db, 'fornecedores'), (snap) => {
-    const data = snap.val();
+onValue(ref(db, 'fornecedores'), (s) => {
+    const data = s.val();
     const sel = document.getElementById('nf-fornecedor-select');
     if(data) sel.innerHTML = Object.values(data).map(f => `<option value="${f.nome}">${f.nome}</option>`).join('');
 });
 
-onValue(ref(db, 'pendentes'), (snap) => {
-    const data = snap.val();
+onValue(ref(db, 'pendentes'), (s) => {
+    const data = s.val();
     pendentesLocais = data || {};
     const sel = document.getElementById('select-item-pendente');
     let html = '<option value="">-- Selecione o Item --</option>';
-    if(data) Object.keys(data).forEach(k => html += `<option value="${k}">NF: ${data[k].nf} - ${data[k].produto}</option>`);
+    if(data) Object.keys(data).forEach(k => html += `<option value="${k}">${data[k].unidade} | NF: ${data[k].nf}</option>`);
     sel.innerHTML = html;
 });
 
-onValue(ref(db, 'feedbacks'), (snap) => {
-    const data = snap.val();
-    feedbacksConcluidos = data ? Object.entries(data).map(([id, v]) => ({ id, ...v })) : [];
-    atualizarDashboard();
+onValue(ref(db, 'feedbacks'), (s) => {
+    const data = s.val();
+    feedbacksCache = data ? Object.entries(data).map(([id, v]) => ({ id, ...v })) : [];
+    window.atualizarDashboard();
 });
 
-// --- COLABORADOR ---
-
 window.carregarDadosItem = () => {
-    let id = document.getElementById('select-item-pendente').value;
-    let item = pendentesLocais[id];
+    const id = document.getElementById('select-item-pendente').value;
+    const item = pendentesLocais[id];
     document.getElementById('display-item').innerText = item ? item.produto : "---";
     document.getElementById('display-forn').innerText = item ? item.fornecedor : "---";
     document.getElementById('display-nf').innerText = item ? item.nf : "---";
+    document.getElementById('display-unidade').innerText = item ? item.unidade : "---";
 };
 
 window.enviarAvaliacao = async () => {
     const id = document.getElementById('select-item-pendente').value;
-    if(!id) return alert("Selecione o item!");
+    const nomeAval = document.getElementById('nome-avaliador').value.trim();
+    
+    if(!id) return alert("Selecione um item!");
+    if(!nomeAval) return alert("Por favor, digite seu nome para rastreabilidade.");
 
     const n1 = parseInt(document.getElementById('nota-qualidade').value);
     const n2 = parseInt(document.getElementById('nota-entrega').value);
     const n3 = parseInt(document.getElementById('nota-estado').value);
     const media = ((n1+n2+n3)/3).toFixed(1);
 
-    const fotoInput = document.getElementById('foto-avaria');
-    let fotoBase64 = null;
-    if (fotoInput.files && fotoInput.files[0]) {
-        fotoBase64 = await toBase64(fotoInput.files[0]);
-    }
+    const f = document.getElementById('foto-avaria').files[0];
+    const base64 = f ? await new Promise(r => { const reader = new FileReader(); reader.readAsDataURL(f); reader.onload = () => r(reader.result); }) : null;
 
-    const novoFeedback = {
+    const feedback = {
         fornecedor: document.getElementById('display-forn').innerText,
         nf: document.getElementById('display-nf').innerText,
-        produto: document.getElementById('display-item').innerText,
+        unidade: document.getElementById('display-unidade').innerText,
+        avaliador: nomeAval, // CAMPO SALVO NO FIREBASE
         media: parseFloat(media),
-        comentario: document.getElementById('comentario').value || "Sem obs.",
-        foto: fotoBase64
+        comentario: document.getElementById('comentario').value,
+        foto: base64,
+        data: new Date().toLocaleString('pt-BR')
     };
 
-    await push(ref(db, 'feedbacks'), novoFeedback);
+    await push(ref(db, 'feedbacks'), feedback);
     await remove(ref(db, `pendentes/${id}`));
-
     document.getElementById('form-avaliacao').reset();
     window.carregarDadosItem();
-    alert("Recebimento Concluído!");
+    alert("Avaliação Enviada!");
 };
 
-const toBase64 = file => new Promise((res, rej) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => res(reader.result);
-    reader.onerror = e => rej(e);
-});
+window.atualizarDashboard = () => {
+    const filtro = document.getElementById('filtro-unidade').value;
+    const dados = filtro === "TODAS" ? feedbacksCache : feedbacksCache.filter(f => f.unidade === filtro);
 
-// --- DASHBOARD ---
-
-function atualizarDashboard() {
-    const total = feedbacksConcluidos.length;
-    const mediaGeral = total > 0 ? (feedbacksConcluidos.reduce((a, b) => a + b.media, 0) / total).toFixed(1) : 0;
-    
-    document.getElementById('kpi-total').innerText = total;
-    document.getElementById('kpi-media').innerText = mediaGeral;
+    document.getElementById('kpi-total').innerText = dados.length;
+    document.getElementById('kpi-media').innerText = dados.length ? (dados.reduce((a, b) => a + b.media, 0) / dados.length).toFixed(1) : 0;
 
     const tbody = document.getElementById('ranking-body');
-    tbody.innerHTML = [...feedbacksConcluidos].reverse().map(f => `
+    tbody.innerHTML = [...dados].reverse().map(f => `
         <tr>
-            <td><b>${f.fornecedor}</b><br><small>NF: ${f.nf}</small></td>
+            <td><b>${f.fornecedor}</b><br><small>${f.unidade}</small></td>
             <td><span class="status-badge ${f.media < 3 ? 'status-low' : 'status-high'}">${f.media}</span></td>
-            <td><button class="btn-ver" onclick="verDetalhes('${f.id}')">Detalhes</button></td>
+            <td><button class="btn-ver" onclick="verDetalhes('${f.id}')">Ver</button></td>
         </tr>
     `).join('');
 
-    renderizarGrafico();
-}
+    renderizarGrafico(dados);
+};
 
 window.verDetalhes = (id) => {
-    const f = feedbacksConcluidos.find(item => item.id === id);
-    const conteudo = document.getElementById('conteudo-detalhe');
-    conteudo.innerHTML = `
-        <p><strong>Item:</strong> ${f.produto}</p>
-        <p><strong>Observações:</strong> "${f.comentario}"</p>
-        ${f.foto ? `<div class="foto-container"><img src="${f.foto}"></div>` : '<p>Sem foto.</p>'}
+    const f = feedbacksCache.find(i => i.id === id);
+    document.getElementById('conteudo-detalhe').innerHTML = `
+        <p><strong>Unidade:</strong> ${f.unidade}</p>
+        <p><strong>Avaliador:</strong> ${f.avaliador || 'Não informado'}</p>
+        <p><strong>Data:</strong> ${f.data || '---'}</p>
+        <p><strong>Obs:</strong> ${f.comentario || 'Sem observações'}</p>
+        ${f.foto ? `<img src="${f.foto}" style="width:100%; margin-top:10px; border-radius:8px;">` : ''}
     `;
     document.getElementById('modal-detalhes').classList.remove('hidden');
 };
 
 window.fecharModalDetalhe = () => document.getElementById('modal-detalhes').classList.add('hidden');
 
-function renderizarGrafico() {
+function renderizarGrafico(dados) {
     const ctx = document.getElementById('meuGrafico').getContext('2d');
     if(meuGrafico) meuGrafico.destroy();
     const resumo = {};
-    feedbacksConcluidos.forEach(f => {
-        if(!resumo[f.fornecedor]) resumo[f.fornecedor] = { s: 0, q: 0 };
+    dados.forEach(f => {
+        resumo[f.fornecedor] = resumo[f.fornecedor] || { s: 0, q: 0 };
         resumo[f.fornecedor].s += f.media; resumo[f.fornecedor].q++;
     });
     meuGrafico = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: Object.keys(resumo),
-            datasets: [{ label: 'Média de Notas', data: Object.values(resumo).map(r => (r.s/r.q).toFixed(1)), backgroundColor: '#20b2aa' }]
+            datasets: [{ label: 'Média', data: Object.values(resumo).map(r => (r.s/r.q).toFixed(1)), backgroundColor: '#20b2aa' }]
         },
         options: { scales: { y: { beginAtZero: true, max: 5 } } }
     });
