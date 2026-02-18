@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NPC SRM 2.0 - Gestão de Fornecedores</title>
+    <title>NPC SRM 1.0 - Gestão de Fornecedores</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
 <nav class="navbar">
-    <div class="nav-brand">NPC SRM 2.0</div>
+    <div class="nav-brand">NPC SRM</div>
     <div class="nav-links">
         <button onclick="irParaTela('colaborador')" id="btn-colab" class="btn-nav active">Avaliar</button>
         <button onclick="abrirAutenticacao('compras')" id="btn-compras" class="btn-nav">Compras</button>
@@ -21,7 +21,7 @@
 <div id="modal-senha" class="modal hidden">
     <div class="modal-content">
         <h3>Acesso Restrito</h3>
-        <input type="password" id="input-senha" placeholder="Senha (123)">
+        <input type="password" id="input-senha" placeholder="Digite a senha de acesso">
         <div class="modal-btns">
             <button onclick="confirmarAcesso()" class="btn-confirm">Entrar</button>
             <button onclick="fecharModal()" class="btn-cancel">Sair</button>
@@ -65,7 +65,7 @@
                 <label>Foto da Avaria/NF (Opcional):</label>
                 <input type="file" id="foto-avaria" accept="image/*" class="input-file">
 
-                <textarea id="comentario" rows="3" placeholder="Houve divergência? A embalagem está íntegra? Relate aqui..."></textarea>
+                <textarea id="comentario" rows="3" placeholder="Relate observações aqui..."></textarea>
                 <button type="button" class="btn-action success" onclick="enviarAvaliacao()">Finalizar Recebimento</button>
             </form>
         </div>
@@ -127,6 +127,6 @@
     </section>
 </main>
 
-<script src="script.js"></script>
+<script type="module" src="script.js"></script>
 </body>
 </html>
