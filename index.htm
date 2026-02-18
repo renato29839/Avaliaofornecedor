@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NPC SRM 1.0 - Gestão de Fornecedores</title>
+    <title>NPC SRM 2.0 - Gestão de Fornecedores</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -21,7 +21,7 @@
 <div id="modal-senha" class="modal hidden">
     <div class="modal-content">
         <h3>Acesso Restrito</h3>
-        <input type="password" id="input-senha" placeholder="Digite a senha de acesso">
+        <input type="password" id="input-senha" placeholder="Senha">
         <div class="modal-btns">
             <button onclick="confirmarAcesso()" class="btn-confirm">Entrar</button>
             <button onclick="fecharModal()" class="btn-cancel">Sair</button>
@@ -30,7 +30,7 @@
 </div>
 
 <div id="modal-detalhes" class="modal hidden">
-    <div class="modal-content detalhe-expandido">
+    <div class="modal-content">
         <h3>Detalhamento da Entrega</h3>
         <div id="conteudo-detalhe"></div>
         <button onclick="fecharModalDetalhe()" class="btn-action primary">Fechar</button>
@@ -43,15 +43,16 @@
             <h3>Recebimento de Mercadoria</h3>
             <label>Selecione o Item Recebido:</label>
             <select id="select-item-pendente" onchange="carregarDadosItem()">
-                <option value="">-- Aguardando Entrega --</option>
+                <option value="">-- Carregando... --</option>
             </select>
 
             <div class="info-badge">
+                <p>Unidade: <b id="display-unidade" style="color: var(--danger);">---</b></p>
                 <p>Fornecedor: <b id="display-forn">---</b></p>
                 <p>Produto: <b id="display-item">---</b> | NF: <b id="display-nf">---</b></p>
             </div>
 
-            <div class="legenda-notas">
+            <div class="legenda-notas" style="background: #fffde7; border: 1px solid #fff59d; padding: 8px; border-radius: 6px; font-size: 0.75rem; text-align: center; margin-bottom: 15px;">
                 Legenda: 1-Ruim | 2-Regular | 3-Bom | 4-Muito Bom | 5-Excelente
             </div>
 
@@ -61,68 +62,66 @@
                     <div class="rate-item"><span>Entrega</span><input type="number" id="nota-entrega" min="1" max="5" value="5"></div>
                     <div class="rate-item"><span>Estado</span><input type="number" id="nota-estado" min="1" max="5" value="5"></div>
                 </div>
+                
+                <label>Seu Nome (Avaliador):</label>
+                <input type="text" id="nome-avaliador" placeholder="Digite seu nome e sobrenome">
 
-                <label>Foto da Avaria/NF (Opcional):</label>
-                <input type="file" id="foto-avaria" accept="image/*" class="input-file">
-
-                <textarea id="comentario" rows="3" placeholder="Relate observações aqui..."></textarea>
+                <label>Foto da Avaria (Opcional):</label>
+                <input type="file" id="foto-avaria" accept="image/*">
+                
+                <textarea id="comentario" rows="3" placeholder="Observações..."></textarea>
                 <button type="button" class="btn-action success" onclick="enviarAvaliacao()">Finalizar Recebimento</button>
             </form>
         </div>
     </section>
 
     <section id="view-compras" class="view hidden">
-        <div class="card admin">
+        <div class="card">
             <h3>Cadastrar Fornecedor</h3>
-            <div class="flex-row">
-                <input type="text" id="cad-forn-nome" placeholder="Nome da Empresa">
+            <div style="display:flex; gap:5px;">
+                <input type="text" id="cad-forn-nome" placeholder="Nome do Fornecedor">
                 <button onclick="cadastrarFornecedor()" class="btn-small">+</button>
             </div>
             <hr>
             <h3>Gerar Novo Protocolo</h3>
-            <div class="form-vertical">
-                <label>Fornecedor:</label>
-                <select id="nf-fornecedor-select"></select>
-                <label>Número da NF:</label>
-                <input type="text" id="nf-numero" placeholder="Ex: 102030">
-                <label>Produto/Serviço:</label>
-                <input type="text" id="nf-item">
-                <button class="btn-action primary" onclick="gerarProtocolo()">Liberar para Estoque</button>
-            </div>
+            <label>Unidade de Destino:</label>
+            <select id="nf-unidade">
+                <option value="Matriz">Matriz</option>
+                <option value="Life">Filial 01</option>
+                <option value="Sul">CD</option>
+            </select>
+            <label>Fornecedor:</label>
+            <select id="nf-fornecedor-select"></select>
+            <label>NF:</label>
+            <input type="text" id="nf-numero">
+            <label>Produto:</label>
+            <input type="text" id="nf-item">
+            <button class="btn-action primary" onclick="gerarProtocolo()">Liberar</button>
         </div>
     </section>
 
     <section id="view-dashboard" class="view hidden">
-        <div class="kpi-container">
-            <div class="kpi-card">
-                <small>Média Geral</small>
-                <h2 id="kpi-media">0.0</h2>
-            </div>
-            <div class="kpi-card">
-                <small>Total Entregas</small>
-                <h2 id="kpi-total">0</h2>
-            </div>
-        </div>
-
         <div class="card">
-            <h3>Ranking de Performance</h3>
+            <label>Filtrar Unidade:</label>
+            <select id="filtro-unidade" onchange="atualizarDashboard()">
+                <option value="TODAS">Todas as Unidades</option>
+                <option value="Matriz">Matriz</option>
+                <option value="Filial 01">Filial 01</option>
+                <option value="CD">CD</option>
+            </select>
+        </div>
+        <div class="kpi-container">
+            <div class="kpi-card"><small>Média</small><h2 id="kpi-media">0.0</h2></div>
+            <div class="kpi-card"><small>Total</small><h2 id="kpi-total">0</h2></div>
+        </div>
+        <div class="card">
             <canvas id="meuGrafico" height="200"></canvas>
         </div>
-
         <div class="card">
-            <h3>Log de Auditoria</h3>
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Fornecedor/NF</th>
-                            <th>Nota</th>
-                            <th>Ação</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ranking-body"></tbody>
-                </table>
-            </div>
+            <table>
+                <thead><tr><th>Fornecedor</th><th>Nota</th><th>Ação</th></tr></thead>
+                <tbody id="ranking-body"></tbody>
+            </table>
         </div>
     </section>
 </main>
