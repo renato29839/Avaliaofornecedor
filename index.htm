@@ -40,7 +40,7 @@
 <main class="container">
     <section id="view-colaborador" class="view">
         <div class="card">
-            <h3>Recebimento de Mercadoria/Serviço</h3>
+            <h3>Recebimento de Mercadoria/Serviço:</h3>
             <label>Selecione o Item/Serviço:</label>
             <select id="select-item-pendente" onchange="carregarDadosItem()">
                 <option value="">-- Carregando... --</option>
@@ -83,18 +83,18 @@
                 <button onclick="cadastrarFornecedor()" class="btn-small">+</button>
             </div>
             <hr>
-            <h3>Gerar Novo Protocolo</h3>
+            <h3>Gerar novo protocolo de avaliação de produto?</h3>
             <label>Unidade de Destino:</label>
             <select id="nf-unidade">
                 <option value="Matriz">Matriz</option>
                 <option value="Life">Life</option>
                 <option value="Sul">Sul</option>
             </select>
-            <label>Fornecedor:</label>
+            <label>Fornecedor/Prestador:</label>
             <select id="nf-fornecedor-select"></select>
             <label>NF:</label>
             <input type="text" id="nf-numero">
-            <label>Produto:</label>
+            <label>Produto/Serviço:</label>
             <input type="text" id="nf-item">
             <button class="btn-action primary" onclick="gerarProtocolo()">Liberar</button>
         </div>
@@ -140,4 +140,5 @@
 <script type="module" src="script.js"></script>
 </body>
 </html>
+
 
