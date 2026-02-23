@@ -19,6 +19,7 @@ let meuGrafico = null;
 let pendentesLocais = {};
 let feedbacksCache = [];
 
+// ACESSO
 window.abrirAutenticacao = (view) => {
     targetView = view;
     document.getElementById('modal-senha').classList.remove('hidden');
@@ -45,11 +46,11 @@ window.irParaTela = (id) => {
     document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
     document.getElementById('view-' + id).classList.remove('hidden');
     document.querySelectorAll('.btn-nav').forEach(b => b.classList.remove('active'));
-    
     const btnMap = { 'colaborador': 'btn-colab', 'compras': 'btn-compras', 'dashboard': 'btn-dash' };
     document.getElementById(btnMap[id]).classList.add('active');
 };
 
+// GESTÃO
 window.cadastrarFornecedor = () => {
     const nome = document.getElementById('cad-forn-nome').value.trim();
     if(nome) push(ref(db, 'fornecedores'), { nome });
@@ -61,12 +62,8 @@ window.gerarProtocolo = () => {
     const prod = document.getElementById('nf-item').value;
     const forn = document.getElementById('nf-fornecedor-select').value;
     const unid = document.getElementById('nf-unidade').value;
-
     if(!nf || !prod) return alert("Preencha os campos!");
-
     push(ref(db, 'pendentes'), { fornecedor: forn, nf: nf, produto: prod, unidade: unid });
-    document.getElementById('nf-numero').value = "";
-    document.getElementById('nf-item').value = "";
     alert("Liberado com sucesso!");
 };
 
@@ -91,6 +88,7 @@ onValue(ref(db, 'feedbacks'), (s) => {
     window.atualizarDashboard();
 });
 
+// AVALIAÇÃO
 window.carregarDadosItem = () => {
     const id = document.getElementById('select-item-pendente').value;
     const item = pendentesLocais[id];
@@ -103,9 +101,7 @@ window.carregarDadosItem = () => {
 window.enviarAvaliacao = async () => {
     const id = document.getElementById('select-item-pendente').value;
     const nomeAval = document.getElementById('nome-avaliador').value.trim();
-    
-    if(!id) return alert("Selecione um item!");
-    if(!nomeAval) return alert("Por favor, digite seu nome para rastreabilidade.");
+    if(!id || !nomeAval) return alert("Selecione o item e digite seu nome!");
 
     const n1 = parseInt(document.getElementById('nota-qualidade').value);
     const n2 = parseInt(document.getElementById('nota-entrega').value);
@@ -118,12 +114,14 @@ window.enviarAvaliacao = async () => {
     const feedback = {
         fornecedor: document.getElementById('display-forn').innerText,
         nf: document.getElementById('display-nf').innerText,
+        produto: document.getElementById('display-item').innerText,
         unidade: document.getElementById('display-unidade').innerText,
-        avaliador: nomeAval, // CAMPO SALVO NO FIREBASE
+        avaliador: nomeAval,
         media: parseFloat(media),
         comentario: document.getElementById('comentario').value,
         foto: base64,
-        data: new Date().toLocaleString('pt-BR')
+        data: new Date().toLocaleString('pt-BR'),
+        timestamp: Date.now()
     };
 
     await push(ref(db, 'feedbacks'), feedback);
@@ -133,9 +131,26 @@ window.enviarAvaliacao = async () => {
     alert("Avaliação Enviada!");
 };
 
+// DASHBOARD
 window.atualizarDashboard = () => {
-    const filtro = document.getElementById('filtro-unidade').value;
-    const dados = filtro === "TODAS" ? feedbacksCache : feedbacksCache.filter(f => f.unidade === filtro);
+    const filtroUnidade = document.getElementById('filtro-unidade').value;
+    const dataInicio = document.getElementById('filtro-data-inicio').value;
+    const dataFim = document.getElementById('filtro-data-fim').value;
+
+    let dados = feedbacksCache;
+
+    if (filtroUnidade !== "TODAS") dados = dados.filter(f => f.unidade === filtroUnidade);
+
+    if (dataInicio || dataFim) {
+        dados = dados.filter(f => {
+            const dataReg = f.timestamp ? new Date(f.timestamp) : converterDataPTBR(f.data);
+            const inicio = dataInicio ? new Date(dataInicio + "T00:00:00") : null;
+            const fim = dataFim ? new Date(dataFim + "T23:59:59") : null;
+            if (inicio && dataReg < inicio) return false;
+            if (fim && dataReg > fim) return false;
+            return true;
+        });
+    }
 
     document.getElementById('kpi-total').innerText = dados.length;
     document.getElementById('kpi-media').innerText = dados.length ? (dados.reduce((a, b) => a + b.media, 0) / dados.length).toFixed(1) : 0;
@@ -152,13 +167,23 @@ window.atualizarDashboard = () => {
     renderizarGrafico(dados);
 };
 
+function converterDataPTBR(str) {
+    if(!str) return new Date(0);
+    const [d, t] = str.split(', ');
+    const [dia, mes, ano] = d.split('/');
+    return new Date(`${ano}-${mes}-${dia}T${t || '00:00:00'}`);
+}
+
 window.verDetalhes = (id) => {
     const f = feedbacksCache.find(i => i.id === id);
     document.getElementById('conteudo-detalhe').innerHTML = `
-        <p><strong>Unidade:</strong> ${f.unidade}</p>
-        <p><strong>Avaliador:</strong> ${f.avaliador || 'Não informado'}</p>
-        <p><strong>Data:</strong> ${f.data || '---'}</p>
-        <p><strong>Obs:</strong> ${f.comentario || 'Sem observações'}</p>
+        <p><strong>📦 Produto:</strong> ${f.produto || 'Não informado'}</p>
+        <p><strong>🚚 Fornecedor:</strong> ${f.fornecedor}</p>
+        <p><strong>📄 NF:</strong> ${f.nf}</p>
+        <p><strong>🏢 Unidade:</strong> ${f.unidade}</p>
+        <p><strong>👤 Avaliador:</strong> ${f.avaliador || '---'}</p>
+        <p><strong>📅 Data:</strong> ${f.data || '---'}</p>
+        <p><strong>💬 Obs:</strong> ${f.comentario || 'Sem observações'}</p>
         ${f.foto ? `<img src="${f.foto}" style="width:100%; margin-top:10px; border-radius:8px;">` : ''}
     `;
     document.getElementById('modal-detalhes').classList.remove('hidden');
@@ -169,16 +194,13 @@ window.fecharModalDetalhe = () => document.getElementById('modal-detalhes').clas
 function renderizarGrafico(dados) {
     const ctx = document.getElementById('meuGrafico').getContext('2d');
     if(meuGrafico) meuGrafico.destroy();
-    const resumo = {};
-    dados.forEach(f => {
-        resumo[f.fornecedor] = resumo[f.fornecedor] || { s: 0, q: 0 };
-        resumo[f.fornecedor].s += f.media; resumo[f.fornecedor].q++;
-    });
+    const res = {};
+    dados.forEach(f => { res[f.fornecedor] = res[f.fornecedor] || {s:0,q:0}; res[f.fornecedor].s += f.media; res[f.fornecedor].q++; });
     meuGrafico = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: Object.keys(resumo),
-            datasets: [{ label: 'Média', data: Object.values(resumo).map(r => (r.s/r.q).toFixed(1)), backgroundColor: '#20b2aa' }]
+            labels: Object.keys(res),
+            datasets: [{ label: 'Média', data: Object.values(res).map(r => (r.s/r.q).toFixed(1)), backgroundColor: '#20b2aa' }]
         },
         options: { scales: { y: { beginAtZero: true, max: 5 } } }
     });
