@@ -7,29 +7,45 @@
 }
 * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
 body { background: var(--bg); margin: 0; color: var(--text); }
+
 .navbar { background: var(--primary); padding: 15px; text-align: center; color: white; position: sticky; top: 0; z-index: 100; }
+.nav-brand { font-size: 1.5rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; } /* NPC SRM EM NEGRITO E CAIXA ALTA */
+
 .nav-links { display: flex; justify-content: center; gap: 10px; margin-top: 10px; }
 .btn-nav { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 15px; border-radius: 20px; cursor: pointer; }
 .btn-nav.active { background: white; color: var(--primary); font-weight: bold; }
+
 .container { padding: 15px; max-width: 500px; margin: auto; }
 .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 15px; }
 .hidden { display: none !important; }
+
 .kpi-container { display: flex; gap: 10px; margin-bottom: 15px; }
 .kpi-card { background: white; flex: 1; padding: 15px; border-radius: 12px; text-align: center; }
+
 .rating-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 15px 0; }
 .rate-item { background: #f8f9fa; padding: 10px; border-radius: 8px; text-align: center; font-size: 0.8rem; }
 .rate-item input { width: 100%; text-align: center; margin-top: 5px; }
+
 input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; }
 .info-badge { background: #f0fdfc; border-left: 4px solid var(--primary); padding: 10px; margin: 15px 0; font-size: 0.9rem; }
+.legenda-notas { background: #fffde7; border: 1px solid #fff59d; padding: 8px; border-radius: 6px; font-size: 0.75rem; text-align: center; margin-bottom: 15px; }
+
 .btn-action { width: 100%; border: none; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; color: white; }
 .success { background: var(--success); }
 .primary { background: var(--primary); }
-.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-.modal-content { background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 400px; text-align: center; }
+
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+.modal-content { background: white; padding: 25px; border-radius: 15px; width: 100%; max-width: 400px; max-height: 85vh; overflow-y: auto; text-align: left; }
+
 .modal-btns { display: flex; gap: 10px; margin-top: 15px; }
 .btn-confirm { background: var(--success); color: white; border: none; flex: 1; padding: 10px; border-radius: 5px; cursor: pointer; }
 .btn-cancel { background: var(--danger); color: white; border: none; flex: 1; padding: 10px; border-radius: 5px; cursor: pointer; }
+
 table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
 th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
+.status-badge { padding: 3px 6px; border-radius: 5px; color: white; font-weight: bold; }
+.status-low { background: var(--danger); }
+.status-high { background: var(--success); }
+
 .btn-ver { background: var(--primary); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
 .btn-small { background: var(--primary); color: white; border: none; padding: 0 15px; border-radius: 8px; cursor: pointer; }
