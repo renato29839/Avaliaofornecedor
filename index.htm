@@ -33,7 +33,7 @@
     <div class="modal-content">
         <h3>Detalhamento da Entrega</h3>
         <div id="conteudo-detalhe"></div>
-        <button onclick="fecharModalDetalhe()" class="btn-action primary">Fechar</button>
+        <button onclick="fecharModalDetalhe()" class="btn-action primary" style="margin-top: 20px;">Fechar</button>
     </div>
 </div>
 
@@ -52,7 +52,7 @@
                 <p>Produto: <b id="display-item">---</b> | NF: <b id="display-nf">---</b></p>
             </div>
 
-            <div class="legenda-notas" style="background: #fffde7; border: 1px solid #fff59d; padding: 8px; border-radius: 6px; font-size: 0.75rem; text-align: center; margin-bottom: 15px;">
+            <div class="legenda-notas">
                 Legenda: 1-Ruim | 2-Regular | 3-Bom | 4-Muito Bom | 5-Excelente
             </div>
 
@@ -64,7 +64,7 @@
                 </div>
                 
                 <label>Seu Nome (Avaliador):</label>
-                <input type="text" id="nome-avaliador" placeholder="Digite seu nome e sobrenome">
+                <input type="text" id="nome-avaliador" placeholder="Digite seu nome completo">
 
                 <label>Foto da Avaria (Opcional):</label>
                 <input type="file" id="foto-avaria" accept="image/*">
@@ -102,17 +102,28 @@
 
     <section id="view-dashboard" class="view hidden">
         <div class="card">
-            <label>Filtrar Unidade:</label>
-            <select id="filtro-unidade" onchange="atualizarDashboard()">
+            <label>Filtros:</label>
+            <select id="filtro-unidade" onchange="atualizarDashboard()" style="margin-bottom: 10px;">
                 <option value="TODAS">Todas as Unidades</option>
                 <option value="Matriz">Matriz</option>
                 <option value="Life">Life</option>
                 <option value="Sul">Sul</option>
             </select>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                    <label><small>Data Início:</small></label>
+                    <input type="date" id="filtro-data-inicio" onchange="atualizarDashboard()">
+                </div>
+                <div>
+                    <label><small>Data Fim:</small></label>
+                    <input type="date" id="filtro-data-fim" onchange="atualizarDashboard()">
+                </div>
+            </div>
         </div>
         <div class="kpi-container">
-            <div class="kpi-card"><small>Média</small><h2 id="kpi-media">0.0</h2></div>
-            <div class="kpi-card"><small>Total</small><h2 id="kpi-total">0</h2></div>
+            <div class="kpi-card"><small>Média Período</small><h2 id="kpi-media">0.0</h2></div>
+            <div class="kpi-card"><small>Total Entregas</small><h2 id="kpi-total">0</h2></div>
         </div>
         <div class="card">
             <canvas id="meuGrafico" height="200"></canvas>
@@ -129,6 +140,3 @@
 <script type="module" src="script.js"></script>
 </body>
 </html>
-
-
-
